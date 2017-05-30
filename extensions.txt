@@ -1,0 +1,6 @@
+Fuzzy idea collection:
+-- print lpquota after printing (on demand? always?)
+-- offer users without ssh key to generate one and attach it
+    (how to find out when this is needed?)
+
+-- 
