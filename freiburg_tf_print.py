@@ -39,7 +39,7 @@ def main():
     parser.add_argument("--pages", help="Print only specified (as comma separated list of page ranges) pages. Only works for PDF documents. Internally uses 'pdftk(1)' to extract pages from the document. Supports all page specifications that 'pdftk(1)' supports.")
     parser.add_argument("--printer", help="Try remote printer PRINTER instead of the first available black-and-white printer.")
     parser.add_argument("--user", help="Use remote user USER instead of cached one.")
-    parser.add_argument("file", help="Path to local file that we want to print remotely.")
+    parser.add_argument("files", help="Paths to local files that we want to print remotely.", nargs="+")
     args = parser.parse_args()
 
     if args.pages:
@@ -75,33 +75,33 @@ def main():
             with open(cache_path, "w") as f:
                 f.write(user)
 
-    if args.printer:
-        # single printer specified, try it and raise error if it is not available.
-
-        if printer_state(user, args.printer) in (PrinterState.READY, PrinterState.PRINTING):
-            printer = args.printer
+    for filename in args.files:
+        if args.printer:
+            # single printer specified, try it and raise error if it is in an error state.
+            if printer_state(user, args.printer) in (PrinterState.READY, PrinterState.PRINTING):
+                printer = args.printer
+            else:
+                raise PrinterNotAvailableError("Tried specified printer '{}', which is not available at the moment!".format(printer))
         else:
-            raise PrinterNotAvailableError("Tried specified printer '{}', which is not available at the moment!".format(printer))
-    else:
-        # no single printer specified, let's explore available options and make the best pick.
+            # no single printer specified, let's explore available options and make the best pick.
 
-        printers = [printer.strip() for printer in args.available_printers.split(",")]
+            printers = [printer.strip() for printer in args.available_printers.split(",")]
 
-        # Determine best printer
-        printer = determine_best_printer(user, printers)
+            # Determine best printer
+            printer = determine_best_printer(user, printers)
 
-        print("Found best suited printer: {}".format(printer))
+            print("Found best suited printer: {}".format(printer))
 
-    try:
-        print_costs_euro = calculate_print_costs(args.file, printer)
-    except (ImportError, ValueError, KeyError) as _: # if this fails, just skip it
-        print("Could not calculate print costs for the given document.\n"
-              "If you care, run: 'pip3 install pyPDF2'.\n"
-              "For now, we'll just print ahead.")
-    else:
-        print("Printing this document costs {} euro.".format(print_costs_euro))
+            try:
+                print_costs_euro = calculate_print_costs(filename, printer)
+            except (ImportError, ValueError, KeyError) as _: # if this fails, just skip it
+                print("Could not calculate print costs for the given document.\n"
+                      "If you care, run: 'pip3 install pyPDF2'.\n"
+                      "For now, we'll just print ahead.")
+            else:
+                print("Printing this document costs {} euro.".format(print_costs_euro))
 
-    print_file(filename=args.file, printer=printer, user=user)
+            print_file(filename=filename, printer=printer, user=user)
 
 
 if __name__ == "__main__":
