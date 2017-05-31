@@ -9,7 +9,8 @@ Overview
 This tool provides means to remotely print any document at the computer pool of 
 the Albert-Ludwigs University in Freiburg. 
 
-It is essentially a lightweight wrapper around LPD (Line Printer Daemon) 
+It is essentially a lightweight wrapper around LPD (`Line Printer Daemon
+<https://en.wikipedia.org/wiki/Berkeley_printing_system>`_) 
 and uses SSH with your pool account credentials at the university for 
 authentification. 
 
