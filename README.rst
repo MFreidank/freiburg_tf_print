@@ -19,4 +19,4 @@ tool find the fastest available choice for you automatically.
 
 We also provide facilities to: 
     * print only certain pages from a document 
-    * provide feedback on the cost of your print job (only for PDF documents)
+    * provide feedback on the cost of your print job (only for PDF documents) 
