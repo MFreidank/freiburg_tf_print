@@ -37,7 +37,7 @@ def main():
     parser.add_argument("--available-printers", help="All printers to try for remote printing, specified as comma-separated list, default: 'hp14,hp15'. Ignored when --printer is specified.",
                         default="hp14,hp15")
     parser.add_argument("--pages", action="store_true", dest="pages", help="Interactively ask user to specify page ranges for each file requested, extract the pages and print only those.", default=False)
-    parser.add_argument("--local", action="store_true", dest="print_local", help="Print using the local computer instead of using ssh to access remote one.", default=False)
+    parser.add_argument("--local", action="store_true", dest="print_local", help="Print using the local computer instead of using ssh to access a remote one.", default=False)
     parser.add_argument("--printer", help="Try remote printer PRINTER instead of the first available black-and-white printer.")
     parser.add_argument("--user", help="Use remote user USER instead of cached one.")
     parser.add_argument("files", help="Paths to local files that we want to print remotely.", nargs="+")
