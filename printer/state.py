@@ -20,7 +20,7 @@ class PrinterState(Enum):
         return state in (PrinterState.READY, PrinterState.PRINTING)
 
 
-def printer_state(user, printer):
+def printer_state(user, printer, local=False):
     """ Use ssh to check state of printer `printer`.
 
     Parameters
@@ -36,7 +36,11 @@ def printer_state(user, printer):
     'PrinterState' enum discretizing state of `printer`.
 
     """
-    output = check_output(["ssh",
-                           "{user}@login.informatik.uni-freiburg.de".format(user=user),
-                           "lpq -P{printer}".format(printer=printer)])
+    if local:
+        output = check_output(["lpq -P{printer}".format(printer=printer)])
+    else:
+        output = check_output(["ssh",
+                               "{user}@login.informatik.uni-freiburg.de".format(user=user),
+                               "lpq -P{printer}".format(printer=printer)])
+
     return PrinterState.from_output(str(output))
