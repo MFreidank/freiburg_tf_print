@@ -14,10 +14,10 @@ def calculate_print_costs(filepath, printer):
     return pages * cost_per_page[printer]
 
 
-def determine_best_printer(user, printers):
+def determine_best_printer(user, printers, local=False):
     possible_printers = []
     for printer in printers:
-        state = printer_state(user, printer)
+        state = printer_state(user, printer, local=local)
         if state == PrinterState.READY:
             return printer
         elif state == PrinterState.PRINTING:
@@ -30,19 +30,28 @@ def determine_best_printer(user, printers):
     raise PrinterNotAvailableError("Found no available printer. Tried '{}'".format(", ".join(printers)))
 
 
-def print_file(filename, printer, user):
+def print_file(filename, printer, user, local=False):
     # Copy file to pool server.
-    try:
-        check_call(["scp", filename,
-                    "{user}@login.informatik.uni-freiburg.de:/home/{user}/".format(user=user)])
-    except CalledProcessError:
-        raise SSHCopyFailed()
+    if local:
+        file_basename = basename(filename)
+        try:
+            check_call(["lpr", "-P{}".format(printer), filename])
+        except CalledProcessError:
+            raise PrintCommandFailed()
+        else:
+            check_call(["lpq", "-P{}".format(printer)])
+    else:
+        try:
+            check_call(["scp", filename,
+                        "{user}@login.informatik.uni-freiburg.de:/home/{user}/".format(user=user)])
+        except CalledProcessError:
+            raise SSHCopyFailed()
 
-    file_basename = basename(filename)
-    # Issue printing command via ssh.
-    try:
-        check_call(["ssh", "{user}@login.informatik.uni-freiburg.de".format(user=user),
-                   "lpr -P{printer} {filename}; lpq -P{printer}".format(printer=printer,
-                                                                        filename=file_basename)])
-    except CalledProcessError:
-        raise PrintCommandFailed()
+        file_basename = basename(filename)
+        # Issue printing command via ssh.
+        try:
+            check_call(["ssh", "{user}@login.informatik.uni-freiburg.de".format(user=user),
+                       "lpr -P{printer} {filename}; lpq -P{printer}".format(printer=printer,
+                                                                            filename=file_basename)])
+        except CalledProcessError:
+            raise PrintCommandFailed()

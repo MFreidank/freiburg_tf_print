@@ -36,21 +36,12 @@ def main():
     parser = argparse.ArgumentParser(description="Print remotely on printers located in the computer pool at Uni Freiburg.")
     parser.add_argument("--available-printers", help="All printers to try for remote printing, specified as comma-separated list, default: 'hp14,hp15'. Ignored when --printer is specified.",
                         default="hp14,hp15")
-    parser.add_argument("--pages", help="Print only specified (as comma separated list of page ranges) pages. Only works for PDF documents. Internally uses 'pdftk(1)' to extract pages from the document. Supports all page specifications that 'pdftk(1)' supports.")
+    parser.add_argument("--pages", action="store_true", dest="pages", help="Interactively ask user to specify page ranges for each file requested, extract the pages and print only those.", default=False)
+    parser.add_argument("--local", action="store_true", dest="print_local", help="Print using the local computer instead of using ssh to access a remote one.", default=False)
     parser.add_argument("--printer", help="Try remote printer PRINTER instead of the first available black-and-white printer.")
     parser.add_argument("--user", help="Use remote user USER instead of cached one.")
     parser.add_argument("files", help="Paths to local files that we want to print remotely.", nargs="+")
     args = parser.parse_args()
-
-    if args.pages:
-        args.pages = args.pages.split(",")
-
-        check_package_installed("pdftk")
-
-        import tempfile
-
-        with tempfile.NamedTemporaryFile(suffix='_print_pool.pdf', delete=False) as outfile:
-            args.file = extract_pages(args.file, outfile.name, args.pages)
 
     if args.user:
         user = args.user
@@ -76,9 +67,25 @@ def main():
                 f.write(user)
 
     for filename in args.files:
+        if args.pages:
+            check_package_installed("pdftk")
+
+            print("Requested document: {}".format(filename))
+
+            page_ranges = input("Enter page ranges to print from this document: (e.g.: '1,2,3' or '12-22,24-34'): ")
+            pages = page_ranges.split(",")
+
+
+            import tempfile
+
+            with tempfile.NamedTemporaryFile(suffix='_print_pool.pdf', delete=False) as outfile:
+                # cut the pages and print the resulting smaller file instead
+                filename = extract_pages(filename, outfile.name, pages)
+
+
         if args.printer:
             # single printer specified, try it and raise error if it is in an error state.
-            if printer_state(user, args.printer) in (PrinterState.READY, PrinterState.PRINTING):
+            if printer_state(user, args.printer, args.print_local) in (PrinterState.READY, PrinterState.PRINTING):
                 printer = args.printer
             else:
                 raise PrinterNotAvailableError("Tried specified printer '{}', which is not available at the moment!".format(printer))
@@ -88,20 +95,21 @@ def main():
             printers = [printer.strip() for printer in args.available_printers.split(",")]
 
             # Determine best printer
-            printer = determine_best_printer(user, printers)
+            printer = determine_best_printer(user, printers, args.print_local)
 
             print("Found best suited printer: {}".format(printer))
 
-            try:
+        try:
+            if not args.print_local:
                 print_costs_euro = calculate_print_costs(filename, printer)
-            except (ImportError, ValueError, KeyError) as _: # if this fails, just skip it
-                print("Could not calculate print costs for the given document.\n"
-                      "If you care, run: 'pip3 install pyPDF2'.\n"
-                      "For now, we'll just print ahead.")
-            else:
+        except (ImportError, ValueError, KeyError) as _: # if this fails, just skip it
+            print("Could not calculate print costs for the given document.\n"
+                  "If you care, run: 'pip3 install pyPDF2'.\n"
+                  "For now, we'll just print ahead.")
+        else:
+            if not args.print_local:
                 print("Printing this document costs {} euro.".format(print_costs_euro))
-
-            print_file(filename=filename, printer=printer, user=user)
+        print_file(filename=filename, printer=printer, user=user, local=args.print_local)
 
 
 if __name__ == "__main__":
