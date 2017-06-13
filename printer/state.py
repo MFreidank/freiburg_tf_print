@@ -37,7 +37,7 @@ def printer_state(user, printer, local=False):
 
     """
     if local:
-        output = check_output(["lpq -P{printer}".format(printer=printer)])
+        output = check_output(["lpq", "-P{printer}".format(printer=printer)])
     else:
         output = check_output(["ssh",
                                "{user}@login.informatik.uni-freiburg.de".format(user=user),

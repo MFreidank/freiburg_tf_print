@@ -107,7 +107,8 @@ def main():
                   "If you care, run: 'pip3 install pyPDF2'.\n"
                   "For now, we'll just print ahead.")
         else:
-            print("Printing this document costs {} euro.".format(print_costs_euro))
+            if not args.print_local:
+                print("Printing this document costs {} euro.".format(print_costs_euro))
         print_file(filename=filename, printer=printer, user=user, local=args.print_local)
 
 

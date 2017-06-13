@@ -35,9 +35,11 @@ def print_file(filename, printer, user, local=False):
     if local:
         file_basename = basename(filename)
         try:
-            check_call(["lpr -P{printer} {filename}; lpq -P{printer}".format(printer=printer, filename=file_basename)])
+            check_call(["lpr", "-P{}".format(printer), filename])
         except CalledProcessError:
             raise PrintCommandFailed()
+        else:
+            check_call(["lpq", "-P{}".format(printer)])
     else:
         try:
             check_call(["scp", filename,
